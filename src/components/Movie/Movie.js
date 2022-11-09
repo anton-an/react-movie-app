@@ -5,6 +5,7 @@ import { Component } from 'react'
 import { GenresConsumer } from '../GenresContext/GenresContext'
 import GenresList from '../GenresList'
 import { truncText, getRatingColor } from '../../helperFunctions'
+import MovieDBapiService from '../../movieDBapi'
 
 import './Movie.css'
 
@@ -60,11 +61,11 @@ export default class Movie extends Component {
   }
 
   onRate = (rating) => {
-    const { rateMovie, movieId } = this.props
+    const { movieId } = this.props
     this.setState({
       rating,
     })
-    rateMovie(movieId, rating)
+    MovieDBapiService.rateMovie(movieId, rating)
   }
 
   render() {
@@ -72,7 +73,7 @@ export default class Movie extends Component {
     const { rating } = this.state
     return (
       <Card className="movie-card" bordered={false} cover={this.getPoster()}>
-        <Statistic value={averageRating} valueStyle={this.ratingStyle()} />
+        <Statistic value={Math.round(averageRating * 10) / 10} valueStyle={this.ratingStyle()} />
         <Title level={3} className="movie-card__title">
           {truncText(title, 14)}
         </Title>
@@ -101,7 +102,6 @@ Movie.defaultProps = {
   posterPath: '',
   userRating: null,
   rated: false,
-  rateMovie: () => {},
 }
 
 Movie.propTypes = {
@@ -112,7 +112,6 @@ Movie.propTypes = {
   averageRating: PropTypes.number.isRequired,
   movieId: PropTypes.number.isRequired,
   genreIds: PropTypes.arrayOf(number),
-  rateMovie: PropTypes.func,
   userRating: PropTypes.number,
   rated: PropTypes.bool,
 }

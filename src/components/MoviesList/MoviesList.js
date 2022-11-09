@@ -18,7 +18,7 @@ export default function MoviesList({ moviesData, rateMovie, rated }) {
         genreIds={movie.genre_ids}
         movieId={movie.id}
         rateMovie={rateMovie}
-        userRating={movie.userRating ? movie.userRating : null}
+        userRating={movie.rating || null}
         rated={rated}
       />
     </Col>

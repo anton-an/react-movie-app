@@ -1,70 +1,91 @@
 export default class MovieDBapiService {
-  apiKey = '0f0863b97ceac687ce7913524f736fe6'
+  static headers = new Headers({
+    Authorization:
+      'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmYWY1NzY4MTg5ZjgxOTVkYWFmMjcyNmQzMmRiYWY4MiIsInN1YiI6IjYyZjJkODQxNWIyZjQ3MDA3ZmZhZjk1NiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.0qQ9P8HniH8wb5DER0ImFcmlVj4Q3k-Ae_I0ZGtWWFE',
+  })
 
-  url = 'https://api.themoviedb.org/3/'
+  static apiKey = 'faf5768189f8195daaf2726d32dbaf82'
 
-  imagesUrl = 'https://image.tmdb.org/t/p/original'
+  static guestSessionId
 
-  static requestToken
+  static async guestSessionInit() {
+    this.guestSessionId = localStorage.getItem('guestSessionId')
 
-  getMovies = async (query, page = 1) => {
-    const searchQuery = `${this.url}search/movie?language=en-US&api_key=${this.apiKey}&query=${query}&page=${page}`
-    const response = await fetch(searchQuery)
-    if (!response.ok) {
-      throw new Error(`Couldn't fetch ${query}, recieved ${response.status}`)
+    if (!this.guestSessionId) {
+      const response = await this.createGuestSession()
+      this.guestSessionId = response.guest_session_id
+      localStorage.setItem('guestSessionId', response.guest_session_id)
     }
-    const data = await response.json()
-    if (data.results.length === 0) throw new Error('No movies found!')
-    return data
   }
 
-  getGenres = async () => {
-    const genresQuery = `${this.url}genre/movie/list?api_key=${this.apiKey}&language=en-US`
-    const response = await fetch(genresQuery)
-    if (!response.ok) {
-      throw new Error(`Couldn't fetch genres, recieved ${response.status}`)
-    }
-
+  static async createGuestSession() {
+    const response = await fetch('https://api.themoviedb.org/3/authentication/guest_session/new', {
+      headers: this.headers,
+    })
     const body = await response.json()
     return body
   }
 
-  getPoster = async (posterPath) => {
-    const response = await fetch(`${this.imagesUrl}${posterPath}`)
-    return response.json()
+  static async getMovies(query, page) {
+    if (!query) return { results: null }
+    const response = await fetch(
+      `https://api.themoviedb.org/3/search/movie?language=en-US&query=${query}&page=${page}`,
+      {
+        headers: this.headers,
+      }
+    )
+    const body = await response.json()
+    if (body.results.length === 0) throw new Error('No movies found!')
+    return body
   }
 
-  createGuestSession = async () => {
-    const sessionQuery = `${this.url}authentication/guest_session/new?api_key=${this.apiKey}`
-    const response = await fetch(sessionQuery)
-    return response.json()
-  }
+  static async getGenres() {
+    const response = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${this.apiKey}`)
+    const body = await response.json()
+    const genres = {}
 
-  createRequestToken = async () => {
-    const response = await fetch(`${this.url}authentication/token/new?api_key=${this.apiKey}`)
-
-    return response.json()
-  }
-
-  rateMovie = async (rating, movieId, guestId) => {
-    const ratingData = { value: rating }
-    const rateQuery = `${this.url}movie/${movieId}/rating?api_key=${this.apiKey}$guest_session_id=${guestId}`
-    const response = await fetch(rateQuery, {
-      method: 'POST',
-      headers: {
-        'Content-type': 'application/json;charset=utf-8',
-      },
-      body: JSON.stringify(ratingData),
+    body.genres.forEach((genre) => {
+      genres[genre.id] = genre.name
     })
-    if (!response.ok) {
-      throw new Error(`Couldn't fetch rateMovie, recieved ${response.status}`)
-    }
-    return response.json()
+
+    return genres
   }
 
-  getRatedMovies = async (guestId) => {
-    const getRatedQuery = `${this.url}guest_session/${guestId}/rated/movies?api_key=${this.apiKey}`
-    const response = await fetch(getRatedQuery)
-    return response.json()
+  static async getRatedMovies(page) {
+    if (!this.guestSessionId) throw new Error('No guest session!')
+    const response = await fetch(
+      `https://api.themoviedb.org/3/guest_session/${this.guestSessionId}/rated/movies?api_key=${this.apiKey}&page=${page}}`
+    )
+    const body = await response.json()
+    return body
+  }
+
+  static async getPoster(str) {
+    if (!str) throw new Error()
+    const response = await fetch(`https://image.tmdb.org/t/p/w500${str}`)
+    const file = await response.blob()
+    const url = URL.createObjectURL(file)
+    return url
+  }
+
+  static async rateMovie(id, rating) {
+    const requestBody = {
+      value: rating,
+    }
+    const response = await fetch(
+      `https://api.themoviedb.org/3/movie/${id}/rating?api_key=${this.apiKey}&guest_session_id=${encodeURI(
+        this.guestSessionId
+      )}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+      }
+    )
+    const body = await response.json()
+    if (!body.success) throw new Error('Failed to rate')
+    return body
   }
 }

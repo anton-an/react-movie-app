@@ -5,7 +5,15 @@ import './SearchBox.css'
 
 export default class SearchBox extends React.Component {
   state = {
-    searchInputValue: '',
+    searchInputValue: localStorage.getItem('searchQuery') ? localStorage.getItem('searchQuery') : '',
+  }
+
+  componentDidMount() {
+    const { searchMovie } = this.props
+    const { searchInputValue } = this.state
+    if (searchInputValue) {
+      searchMovie(searchInputValue)
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {

@@ -1,15 +1,20 @@
 import { Pagination, Spin, Alert } from 'antd'
-import PropTypes, { number } from 'prop-types'
 import { Component } from 'react'
 import './SearchPage.css'
+import { debounce } from 'lodash'
 
+import MovieDBapiService from '../../movieDBapi'
 import MoviesList from '../MoviesList'
 import SearchBox from '../SearchBox'
 
 export default class SearchPage extends Component {
   state = {
+    moviesData: null,
     searchQuery: '',
     currentPage: 1,
+    loading: false,
+    totalMovies: 0,
+    error: null,
   }
 
   componentDidUpdate(prevProps) {
@@ -19,21 +24,54 @@ export default class SearchPage extends Component {
     }
   }
 
+  getMovie = debounce((query, page = 1) => {
+    this.setState({ loading: true })
+    localStorage.setItem('searchQuery', query)
+    MovieDBapiService.getMovies(query, page)
+      .then((body) => {
+        this.setState({
+          moviesData: body.results,
+          searchQuery: query,
+          loading: false,
+          totalMovies: body.total_results,
+        })
+      })
+      .catch((error) => this.setState({ error }))
+  }, 800)
+
+  searchMovie = (query, page = 1) => {
+    this.setState({
+      moviesData: null,
+      loading: true,
+      totalMovies: 0,
+      error: null,
+    })
+    this.getMovie(query, page)
+  }
+
+  clearMovies = () => {
+    this.getMovie.cancel()
+    this.setState({
+      moviesData: null,
+      loading: false,
+      totalMovies: 0,
+    })
+  }
+
   onChangePage = (page) => {
-    const { searchMovie } = this.props
     const { searchQuery } = this.state
     this.setState({
       currentPage: page,
     })
-    searchMovie(searchQuery, page)
+    this.searchMovie(searchQuery, page)
   }
 
   render() {
-    const { moviesData, searchMovie, totalMovies, loading, rateMovie, clearMovies, error } = this.props
-    const { currentPage } = this.state
+    const { rateMovie } = this.props
+    const { moviesData, currentPage, totalMovies, error, loading } = this.state
     return (
       <div className="search-page">
-        <SearchBox searchMovie={searchMovie} clearMovies={clearMovies} />
+        <SearchBox searchMovie={this.searchMovie} clearMovies={this.clearMovies} />
         {loading && !error ? <Spin className="spinner" size="large" /> : null}
         {error ? <Alert message={error.message} type="error" showIcon /> : null}
         <MoviesList moviesData={moviesData} rateMovie={rateMovie} />
@@ -50,37 +88,4 @@ export default class SearchPage extends Component {
       </div>
     )
   }
-}
-
-SearchPage.defaultProps = {
-  moviesData: null,
-  error: null,
-}
-
-SearchPage.propTypes = {
-  moviesData: PropTypes.arrayOf(
-    PropTypes.shape({
-      poster_path: PropTypes.string,
-      adult: PropTypes.bool,
-      overview: PropTypes.string,
-      release_date: PropTypes.string,
-      genre_ids: PropTypes.arrayOf(number),
-      id: PropTypes.number,
-      original_title: PropTypes.string,
-      original_language: PropTypes.string,
-      title: PropTypes.string,
-      backdrop_path: PropTypes.string,
-      popularity: PropTypes.number,
-      vote_count: PropTypes.number,
-      video: PropTypes.bool,
-      vote_average: PropTypes.number,
-    })
-  ),
-  searchMovie: PropTypes.func.isRequired,
-  totalMovies: PropTypes.number.isRequired,
-  searchQuery: PropTypes.string.isRequired,
-  loading: PropTypes.bool.isRequired,
-  rateMovie: PropTypes.func.isRequired,
-  clearMovies: PropTypes.func.isRequired,
-  error: PropTypes.instanceOf(Error),
 }

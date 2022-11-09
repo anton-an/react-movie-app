@@ -1,39 +1,68 @@
-import PropTypes, { number } from 'prop-types'
-import { Pagination } from 'antd'
+import { Pagination, Spin, Alert } from 'antd'
+import { Component } from 'react'
+import { debounce } from 'lodash'
 
 import './RatedPage.css'
 import MoviesList from '../MoviesList'
+import MovieDBapiService from '../../movieDBapi'
 
-export default function RatedPage({ ratedMovies }) {
-  return (
-    <div>
-      <MoviesList moviesData={ratedMovies} rated />
-      <Pagination hideOnSinglePage />
-    </div>
-  )
-}
+export default class RatedPage extends Component {
+  state = {
+    ratedMovies: '',
+    error: '',
+    loading: false,
+    currentPage: 1,
+    totalMovies: 0,
+  }
 
-RatedPage.defaultProps = {
-  ratedMovies: null,
-}
+  componentDidMount() {
+    const { currentPage } = this.state
+    this.setState({ loading: true })
+    this.getRatedMovies(currentPage)
+  }
 
-RatedPage.propTypes = {
-  ratedMovies: PropTypes.arrayOf(
-    PropTypes.shape({
-      poster_path: PropTypes.string,
-      adult: PropTypes.bool,
-      overview: PropTypes.string,
-      release_date: PropTypes.string,
-      genre_ids: PropTypes.arrayOf(number),
-      id: PropTypes.number,
-      original_title: PropTypes.string,
-      original_language: PropTypes.string,
-      title: PropTypes.string,
-      backdrop_path: PropTypes.string,
-      popularity: PropTypes.number,
-      vote_count: PropTypes.number,
-      video: PropTypes.bool,
-      vote_average: PropTypes.number,
-    })
-  ),
+  componentDidUpdate() {
+    const { currentPage } = this.state
+    if (currentPage) {
+      this.getRatedMovies(currentPage)
+    }
+  }
+
+  getRatedMovies = debounce((page) => {
+    MovieDBapiService.getRatedMovies(page)
+      .then((body) => {
+        this.setState({ ratedMovies: body.results, loading: false, totalMovies: body.total_results })
+      })
+      .catch((error) => {
+        this.setState({
+          error,
+          loading: false,
+        })
+      })
+  }, 777)
+
+  onPageChange = (page) => {
+    this.setState({ currentPage: page })
+  }
+
+  render() {
+    const { ratedMovies, loading, error, currentPage, totalMovies } = this.state
+    return (
+      <div>
+        {loading && !error ? <Spin className="spinner" size="large" /> : null}
+        {error ? <Alert message={error.message} type="error" showIcon /> : null}
+        <MoviesList moviesData={ratedMovies} rated />
+        <Pagination
+          className="pagination"
+          current={currentPage}
+          total={totalMovies}
+          pageSize={20}
+          size="small"
+          showSizeChanger={false}
+          onChange={this.onPageChange}
+          hideOnSinglePage
+        />
+      </div>
+    )
+  }
 }
