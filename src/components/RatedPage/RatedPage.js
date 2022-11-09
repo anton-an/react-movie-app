@@ -1,6 +1,5 @@
 import { Pagination, Spin, Alert } from 'antd'
 import { Component } from 'react'
-import { debounce } from 'lodash'
 
 import './RatedPage.css'
 import MoviesList from '../MoviesList'
@@ -21,14 +20,14 @@ export default class RatedPage extends Component {
     this.getRatedMovies(currentPage)
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
     const { currentPage } = this.state
-    if (currentPage) {
+    if (prevState.currentPage !== currentPage) {
       this.getRatedMovies(currentPage)
     }
   }
 
-  getRatedMovies = debounce((page) => {
+  getRatedMovies = (page) => {
     MovieDBapiService.getRatedMovies(page)
       .then((body) => {
         this.setState({ ratedMovies: body.results, loading: false, totalMovies: body.total_results })
@@ -39,7 +38,7 @@ export default class RatedPage extends Component {
           loading: false,
         })
       })
-  }, 777)
+  }
 
   onPageChange = (page) => {
     this.setState({ currentPage: page })
