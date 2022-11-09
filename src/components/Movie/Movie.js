@@ -1,5 +1,5 @@
 import PropTypes, { number } from 'prop-types'
-import { Card, Typography, Rate, Image, Statistic } from 'antd'
+import { Card, Typography, Rate, Image, Statistic, message } from 'antd'
 import { Component } from 'react'
 
 import { GenresConsumer } from '../GenresContext/GenresContext'
@@ -65,7 +65,7 @@ export default class Movie extends Component {
     this.setState({
       rating,
     })
-    MovieDBapiService.rateMovie(movieId, rating)
+    MovieDBapiService.rateMovie(movieId, rating).then(() => message.success('Successfully rated!'))
   }
 
   render() {
