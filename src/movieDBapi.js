@@ -60,14 +60,6 @@ export default class MovieDBapiService {
     return body
   }
 
-  static async getPoster(str) {
-    if (!str) throw new Error()
-    const response = await fetch(`https://image.tmdb.org/t/p/w500${str}`)
-    const file = await response.blob()
-    const url = URL.createObjectURL(file)
-    return url
-  }
-
   static async rateMovie(id, rating) {
     const requestBody = {
       value: rating,
