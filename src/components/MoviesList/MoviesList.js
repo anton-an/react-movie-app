@@ -4,7 +4,7 @@ import { Row, Col } from 'antd'
 
 import Movie from '../Movie'
 
-export default function MoviesList({ moviesData, rateMovie, rated }) {
+export default function MoviesList({ moviesData, rateMovie, rated, deleteRatedFromState }) {
   if (!moviesData) return null
 
   const movies = moviesData.map((movie) => (
@@ -18,8 +18,9 @@ export default function MoviesList({ moviesData, rateMovie, rated }) {
         genreIds={movie.genre_ids}
         movieId={movie.id}
         rateMovie={rateMovie}
-        userRating={movie.rating || null}
+        userRating={movie.rating}
         rated={rated}
+        deleteRatedFromState={deleteRatedFromState}
       />
     </Col>
   ))

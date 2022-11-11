@@ -2,7 +2,7 @@ import PropTypes, { number } from 'prop-types'
 import { Card, Typography, Rate, Image, Statistic, message } from 'antd'
 import { Component } from 'react'
 
-import { GenresConsumer } from '../GenresContext/GenresContext'
+import { GenresConsumer } from '../../GenresContext/GenresContext'
 import GenresList from '../GenresList'
 import { truncText, getRatingColor } from '../../helperFunctions'
 import MovieDBapiService from '../../movieDBapi'
@@ -14,6 +14,17 @@ const { Title, Text } = Typography
 export default class Movie extends Component {
   state = {
     rating: 0,
+  }
+
+  componentDidMount() {
+    const { movieId } = this.props
+    if (localStorage.getItem('stars')) {
+      const stars = JSON.parse(localStorage.getItem('stars'))
+      if (stars[movieId]) {
+        const star = stars[movieId]
+        this.setState({ rating: star })
+      }
+    }
   }
 
   ratingStyle = () => {
@@ -62,14 +73,33 @@ export default class Movie extends Component {
 
   onRate = (rating) => {
     const { movieId } = this.props
-    this.setState({
-      rating,
+    const stars = localStorage.getItem('stars')
+    if (!stars) {
+      localStorage.setItem('stars', '{}')
+    }
+    const newObject = JSON.parse(localStorage.getItem('stars'))
+    newObject[movieId] = rating
+    localStorage.setItem('stars', JSON.stringify(newObject))
+    this.setState({ rating })
+    MovieDBapiService.rateMovie(movieId, rating).then(() => {
+      message.success('Successfully rated!')
     })
-    MovieDBapiService.rateMovie(movieId, rating).then(() => message.success('Successfully rated!'))
+  }
+
+  onDeleteRate = () => {
+    const { movieId, deleteRatedFromState } = this.props
+    const stars = JSON.parse(localStorage.getItem('stars'))
+    delete stars[movieId]
+    localStorage.setItem('stars', JSON.stringify(stars))
+    this.setState({ rating: 0 })
+    MovieDBapiService.deleteRatedMovie(movieId).then(() => {
+      message.success('Rating successfully deleted!')
+      deleteRatedFromState(movieId)
+    })
   }
 
   render() {
-    const { averageRating, title, releaseDate, genreIds, userRating, rated } = this.props
+    const { averageRating, title, releaseDate, genreIds } = this.props
     const { rating } = this.state
     return (
       <Card className="movie-card" bordered={false} cover={this.getPoster()}>
@@ -87,9 +117,8 @@ export default class Movie extends Component {
             className="movie-card__stars"
             count={10}
             allowHalf
-            value={userRating || rating}
-            onChange={this.onRate}
-            disabled={rated}
+            value={rating}
+            onChange={rating ? this.onDeleteRate : this.onRate}
           />
         </div>
       </Card>
@@ -100,8 +129,6 @@ export default class Movie extends Component {
 Movie.defaultProps = {
   genreIds: null,
   posterPath: '',
-  userRating: null,
-  rated: false,
 }
 
 Movie.propTypes = {
@@ -112,6 +139,4 @@ Movie.propTypes = {
   averageRating: PropTypes.number.isRequired,
   movieId: PropTypes.number.isRequired,
   genreIds: PropTypes.arrayOf(number),
-  userRating: PropTypes.number,
-  rated: PropTypes.bool,
 }

@@ -5,12 +5,12 @@ import { Alert, Tabs } from 'antd'
 
 import MovieDBapiService from '../../movieDBapi'
 import SearchPage from '../SearchPage'
-import { GenresProvider } from '../GenresContext/GenresContext'
+import { GenresProvider } from '../../GenresContext/GenresContext'
 import RatedPage from '../RatedPage'
 
 export default class App extends React.Component {
   state = {
-    genresData: null,
+    genresData: [],
     error: null,
   }
 
@@ -24,7 +24,8 @@ export default class App extends React.Component {
     this.setState({
       genresData: this.getGenres(),
     })
-    MovieDBapiService.guestSessionInit()
+    this.setState({})
+    MovieDBapiService.guestSessionInit().then(this.getRatedMovies)
   }
 
   getGenres = () => {

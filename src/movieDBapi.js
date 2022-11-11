@@ -51,13 +51,29 @@ export default class MovieDBapiService {
     return genres
   }
 
-  static async getRatedMovies(page) {
+  static async getRatedMovies(page = 1) {
     if (!this.guestSessionId) throw new Error('No guest session!')
     const response = await fetch(
-      `https://api.themoviedb.org/3/guest_session/${this.guestSessionId}/rated/movies?api_key=${this.apiKey}&page=${page}}`
+      `https://api.themoviedb.org/3/guest_session/${this.guestSessionId}/rated/movies?api_key=${this.apiKey}&page=${page}`
     )
     const body = await response.json()
     return body
+  }
+
+  static async deleteRatedMovie(id) {
+    if (!this.guestSessionId) throw new Error('No guest session!')
+    const response = await fetch(
+      `https://api.themoviedb.org/3/movie/${id}/rating?api_key=${this.apiKey}&guest_session_id=${encodeURI(
+        this.guestSessionId
+      )}`,
+      {
+        method: 'DELETE',
+      }
+    )
+    if (!response.ok) {
+      throw new Error('Can not delete rating!')
+    }
+    return response.json()
   }
 
   static async rateMovie(id, rating) {

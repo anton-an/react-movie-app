@@ -7,7 +7,7 @@ import MovieDBapiService from '../../movieDBapi'
 
 export default class RatedPage extends Component {
   state = {
-    ratedMovies: '',
+    ratedMovies: [],
     error: '',
     loading: false,
     currentPage: 1,
@@ -44,13 +44,21 @@ export default class RatedPage extends Component {
     this.setState({ currentPage: page })
   }
 
+  deleteRatedFromState = (id) => {
+    this.setState((state) => {
+      const { ratedMovies } = state
+      const newArr = ratedMovies.filter((item) => item.id !== id)
+      return { ratedMovies: newArr }
+    })
+  }
+
   render() {
     const { ratedMovies, loading, error, currentPage, totalMovies } = this.state
     return (
       <div>
         {loading && !error ? <Spin className="spinner" size="large" /> : null}
         {error ? <Alert message={error.message} type="error" showIcon /> : null}
-        <MoviesList moviesData={ratedMovies} rated />
+        <MoviesList moviesData={ratedMovies} deleteRatedFromState={this.deleteRatedFromState} rated />
         <Pagination
           className="pagination"
           current={currentPage}

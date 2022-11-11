@@ -9,7 +9,8 @@ import SearchBox from '../SearchBox'
 
 export default class SearchPage extends Component {
   state = {
-    moviesData: null,
+    moviesData: [],
+    ratedMovies: {},
     searchQuery: '',
     currentPage: 1,
     loading: false,
@@ -24,7 +25,7 @@ export default class SearchPage extends Component {
     }
   }
 
-  getMovie = debounce((query, page = 1) => {
+  getMovies = debounce((query, page = 1) => {
     this.setState({ loading: true })
     localStorage.setItem('searchQuery', query)
     MovieDBapiService.getMovies(query, page)
@@ -41,16 +42,16 @@ export default class SearchPage extends Component {
 
   searchMovie = (query, page = 1) => {
     this.setState({
-      moviesData: null,
+      moviesData: [],
       loading: true,
       totalMovies: 0,
       error: null,
     })
-    this.getMovie(query, page)
+    this.getMovies(query, page)
   }
 
   clearMovies = () => {
-    this.getMovie.cancel()
+    this.getMovies.cancel()
     this.setState({
       moviesData: null,
       loading: false,
@@ -68,13 +69,13 @@ export default class SearchPage extends Component {
 
   render() {
     const { rateMovie } = this.props
-    const { moviesData, currentPage, totalMovies, error, loading } = this.state
+    const { moviesData, currentPage, totalMovies, error, loading, ratedMovies } = this.state
     return (
       <div className="search-page">
         <SearchBox searchMovie={this.searchMovie} clearMovies={this.clearMovies} />
         {loading && !error ? <Spin className="spinner" size="large" /> : null}
         {error ? <Alert message={error.message} type="error" showIcon /> : null}
-        <MoviesList moviesData={moviesData} rateMovie={rateMovie} />
+        <MoviesList moviesData={moviesData} rateMovie={rateMovie} ratedMovies={ratedMovies} />
         <Pagination
           total={totalMovies}
           current={currentPage}
