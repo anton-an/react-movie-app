@@ -81,21 +81,27 @@ export default class Movie extends Component {
     newObject[movieId] = rating
     localStorage.setItem('stars', JSON.stringify(newObject))
     this.setState({ rating })
-    MovieDBapiService.rateMovie(movieId, rating).then(() => {
-      message.success('Successfully rated!')
-    })
+    MovieDBapiService.rateMovie(movieId, rating)
+      .then(() => {
+        message.success('Successfully rated!', 2)
+      })
+      .catch(() => message.error('Can not rate!', 2))
   }
 
   onDeleteRate = () => {
-    const { movieId, deleteRatedFromState } = this.props
+    const { movieId, deleteRatedFromState, rated } = this.props
     const stars = JSON.parse(localStorage.getItem('stars'))
     delete stars[movieId]
     localStorage.setItem('stars', JSON.stringify(stars))
     this.setState({ rating: 0 })
-    MovieDBapiService.deleteRatedMovie(movieId).then(() => {
-      message.success('Rating successfully deleted!')
-      deleteRatedFromState(movieId)
-    })
+    MovieDBapiService.deleteRatedMovie(movieId)
+      .then(() => {
+        message.success('Rating successfully deleted!', 2)
+        if (rated) {
+          deleteRatedFromState(movieId)
+        }
+      })
+      .catch(() => message.error('Can not delete rating!', 2))
   }
 
   render() {
