@@ -17,13 +17,16 @@ export default class Movie extends Component {
   }
 
   componentDidMount() {
-    const { movieId } = this.props
-    if (localStorage.getItem('stars')) {
+    const { movieId, userRating } = this.props
+    if (!userRating && localStorage.getItem('stars')) {
       const stars = JSON.parse(localStorage.getItem('stars'))
       if (stars[movieId]) {
         const star = stars[movieId]
         this.setState({ rating: star })
       }
+    }
+    if (userRating) {
+      this.setState({ rating: userRating })
     }
   }
 
