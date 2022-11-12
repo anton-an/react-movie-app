@@ -1,4 +1,5 @@
 .movie-card {
+  position: relative;
   display: flex;
   flex-direction: row;
   height: 280px;
@@ -26,6 +27,34 @@
   align-items: flex-start;
   font-family: 'Inter';
   font-size: 12px;
+}
+
+.movie-card__rating {
+  display: flex;
+  position: absolute;
+  justify-content: center;
+  align-items: center;
+  top: 12px;
+  right: 9px;
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
+  color: 15px;
+  border: 2px solid;
+  border-radius: 50%;
+  border-color: #66e900;
+}
+
+.movie-card__rating--yellow {
+  border-color: #e9d100;
+}
+
+.movie-card__rating--red {
+  border-color: #e90000;
+}
+
+.movie-card__rating--orange {
+  border-color: #e97e00;
 }
 
 .movie-card__title {

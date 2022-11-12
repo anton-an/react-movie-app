@@ -1,20 +1,30 @@
 import PropTypes, { number } from 'prop-types'
-import { Card, Typography, Rate, Image, Statistic, message } from 'antd'
-import { Component } from 'react'
+import { Card, Typography, Rate, Image, message } from 'antd'
+import React from 'react'
+import classNames from 'classnames'
 
 import { GenresConsumer } from '../../GenresContext/GenresContext'
 import GenresList from '../GenresList'
-import { truncText, getRatingColor } from '../../helperFunctions'
+import { truncText } from '../../helperFunctions'
 import MovieDBapiService from '../../movieDBapi'
 
 import './Movie.css'
 
 const { Title, Text } = Typography
 
-export default class Movie extends Component {
+export default class Movie extends React.Component {
   state = {
     rating: 0,
   }
+
+  /* eslint-disable */
+  ratingClass = classNames({
+    'movie-card__rating': true,
+    'movie-card__rating--red': this.props.averageRating <= 3,
+    'movie-card__rating--orange': this.props.averageRating <= 5,
+    'movie-card__rating--yellow': this.props.averageRating <= 7,
+  })
+  /* eslint-enable */
 
   componentDidMount() {
     const { movieId, userRating } = this.props
@@ -28,24 +38,6 @@ export default class Movie extends Component {
     if (userRating) {
       this.setState({ rating: userRating })
     }
-  }
-
-  ratingStyle = () => {
-    const { averageRating } = this.props
-    const style = {
-      position: 'absolute',
-      top: '12px',
-      right: '9px',
-      width: '30px',
-      height: '30px',
-      paddingTop: '4px',
-      textAlign: 'center',
-      fontSize: '12px',
-      border: '2px solid',
-      borderColor: getRatingColor(averageRating),
-      borderRadius: '50%',
-    }
-    return style
   }
 
   getPoster = () => {
@@ -91,28 +83,13 @@ export default class Movie extends Component {
       .catch(() => message.error('Can not rate!', 2))
   }
 
-  onDeleteRate = () => {
-    const { movieId, deleteRatedFromState, rated } = this.props
-    const stars = JSON.parse(localStorage.getItem('stars'))
-    delete stars[movieId]
-    localStorage.setItem('stars', JSON.stringify(stars))
-    this.setState({ rating: 0 })
-    MovieDBapiService.deleteRatedMovie(movieId)
-      .then(() => {
-        message.success('Rating successfully deleted!', 2)
-        if (rated) {
-          deleteRatedFromState(movieId)
-        }
-      })
-      .catch(() => message.error('Can not delete rating!', 2))
-  }
-
   render() {
     const { averageRating, title, releaseDate, genreIds } = this.props
     const { rating } = this.state
     return (
       <Card className="movie-card" bordered={false} cover={this.getPoster()}>
-        <Statistic value={Math.round(averageRating * 10) / 10} valueStyle={this.ratingStyle()} />
+        {/* через модификаторы не получится, так как стиль компонента Statistic меняется только инлайном */}
+        <span className={this.ratingClass}>{Math.round(averageRating * 10) / 10}</span>
         <Title level={3} className="movie-card__title">
           {truncText(title, 14)}
         </Title>
@@ -126,8 +103,9 @@ export default class Movie extends Component {
             className="movie-card__stars"
             count={10}
             allowHalf
+            allowClear={false}
             value={rating}
-            onChange={rating ? this.onDeleteRate : this.onRate}
+            onChange={this.onRate}
           />
         </div>
       </Card>
@@ -138,6 +116,7 @@ export default class Movie extends Component {
 Movie.defaultProps = {
   genreIds: null,
   posterPath: '',
+  userRating: 0,
 }
 
 Movie.propTypes = {
@@ -146,6 +125,7 @@ Movie.propTypes = {
   title: PropTypes.string.isRequired,
   posterPath: PropTypes.string,
   averageRating: PropTypes.number.isRequired,
+  userRating: PropTypes.number,
   movieId: PropTypes.number.isRequired,
   genreIds: PropTypes.arrayOf(number),
 }

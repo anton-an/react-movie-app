@@ -1,33 +1,49 @@
-import { Pagination, Spin, Alert } from 'antd'
-import { Component } from 'react'
+import { Pagination, Spin, Alert, Input } from 'antd'
+import React from 'react'
 import './SearchPage.css'
 import { debounce } from 'lodash'
 
 import MovieDBapiService from '../../movieDBapi'
 import MoviesList from '../MoviesList'
-import SearchBox from '../SearchBox'
 
-export default class SearchPage extends Component {
+export default class SearchPage extends React.Component {
   state = {
     moviesData: [],
     ratedMovies: {},
-    searchQuery: '',
-    currentPage: 1,
+    searchQuery: localStorage.getItem('searchPageData')
+      ? JSON.parse(localStorage.getItem('searchPageData')).searchQuery
+      : '',
+    currentPage: localStorage.getItem('searchPageData')
+      ? JSON.parse(localStorage.getItem('searchPageData')).currentPage
+      : 1,
     loading: false,
     totalMovies: 0,
     error: null,
   }
 
-  componentDidUpdate(prevProps) {
-    const { searchQuery } = this.props
-    if (searchQuery !== prevProps.searchQuery) {
-      this.setState({ searchQuery })
+  componentDidMount() {
+    const { searchQuery, currentPage } = this.state
+    this.setState({ loading: true })
+    if (searchQuery) {
+      this.getMovies(searchQuery, currentPage)
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { searchQuery, currentPage } = this.state
+    if (searchQuery !== prevState.searchQuery || currentPage !== prevState.currentPage) {
+      this.setState({ error: null })
+      if (!searchQuery) {
+        this.clearMovies()
+        return
+      }
+      this.setState({ loading: true })
+      this.getMovies(searchQuery, currentPage)
     }
   }
 
   getMovies = debounce((query, page = 1) => {
     this.setState({ loading: true })
-    localStorage.setItem('searchQuery', query)
     MovieDBapiService.getMovies(query, page)
       .then((body) => {
         this.setState({
@@ -36,11 +52,25 @@ export default class SearchPage extends Component {
           loading: false,
           totalMovies: body.total_results,
         })
+        this.saveSearchState()
       })
-      .catch((error) => this.setState({ error }))
+      .catch((error) => {
+        this.clearMovies()
+        this.setState({ error })
+      })
   }, 800)
 
-  searchMovie = (query, page = 1) => {
+  saveSearchState = () => {
+    const { currentPage, searchQuery } = this.state
+    let state = {
+      currentPage,
+      searchQuery,
+    }
+    state = JSON.stringify(state)
+    localStorage.setItem('searchPageData', state)
+  }
+
+  searchMovie = (query, page) => {
     this.setState({
       moviesData: [],
       loading: true,
@@ -53,7 +83,7 @@ export default class SearchPage extends Component {
   clearMovies = () => {
     this.getMovies.cancel()
     this.setState({
-      moviesData: null,
+      moviesData: [],
       loading: false,
       totalMovies: 0,
     })
@@ -67,17 +97,21 @@ export default class SearchPage extends Component {
     this.searchMovie(searchQuery, page)
   }
 
+  onInput = (e) => {
+    this.setState({ searchQuery: e.target.value })
+  }
+
   render() {
-    const { rateMovie } = this.props
-    const { moviesData, currentPage, totalMovies, error, loading, ratedMovies } = this.state
+    const { moviesData, currentPage, totalMovies, error, loading, ratedMovies, searchQuery } = this.state
     return (
       <div className="search-page">
-        <SearchBox searchMovie={this.searchMovie} clearMovies={this.clearMovies} />
+        <Input className="search-box" placeholder="Type to search..." onChange={this.onInput} value={searchQuery} />
         {loading && !error ? <Spin className="spinner" size="large" /> : null}
         {error ? <Alert message={error.message} type="error" showIcon /> : null}
-        <MoviesList moviesData={moviesData} rateMovie={rateMovie} ratedMovies={ratedMovies} />
+        <MoviesList moviesData={moviesData} ratedMovies={ratedMovies} />
         <Pagination
           total={totalMovies}
+          defaultCurrent={1}
           current={currentPage}
           showSizeChanger={false}
           hideOnSinglePage

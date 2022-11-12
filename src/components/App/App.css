@@ -21,9 +21,20 @@
   color: black;
 }
 
+@media screen and (max-width: 1010px) {
+  .movies {
+    width: 100%;
+  }
+  .movies-app {
+    width: 100vw;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .movies {
-    width: 100vw;
+    width: 100%;
     padding: 16px;
   }
 }
+
+

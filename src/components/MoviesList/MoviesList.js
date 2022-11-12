@@ -4,11 +4,11 @@ import { Row, Col } from 'antd'
 
 import Movie from '../Movie'
 
-export default function MoviesList({ moviesData, rateMovie, rated, deleteRatedFromState }) {
+export default function MoviesList({ moviesData, rateMovie, rated }) {
   if (!moviesData) return null
 
   const movies = moviesData.map((movie) => (
-    <Col key={movie.id} xs={24} sm={24} md={12} lg={12}>
+    <Col key={movie.id} xs={24} sm={24} lg={12}>
       <Movie
         releaseDate={movie.release_date}
         title={movie.title}
@@ -20,7 +20,6 @@ export default function MoviesList({ moviesData, rateMovie, rated, deleteRatedFr
         rateMovie={rateMovie}
         userRating={movie.rating}
         rated={rated}
-        deleteRatedFromState={deleteRatedFromState}
       />
     </Col>
   ))
@@ -45,6 +44,8 @@ MoviesList.defaultProps = {
 }
 
 MoviesList.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  moviesData: PropTypes.object.isRequired,
   rateMovie: PropTypes.func,
   rated: PropTypes.bool,
 }

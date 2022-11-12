@@ -1,9 +1,0 @@
-.search-box {
-  margin: 5px 0 32px 0;
-}
-
-@media screen and (max-width: 768px) {
-  .search-box {
-    margin: 5px 0 16px 0;
-  }
-}

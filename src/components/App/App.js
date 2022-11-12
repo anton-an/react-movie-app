@@ -24,8 +24,7 @@ export default class App extends React.Component {
     this.setState({
       genresData: this.getGenres(),
     })
-    this.setState({})
-    MovieDBapiService.guestSessionInit().then(this.getRatedMovies)
+    MovieDBapiService.guestSessionInit()
   }
 
   getGenres = () => {
