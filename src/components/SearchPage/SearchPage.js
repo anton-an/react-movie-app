@@ -23,8 +23,8 @@ export default class SearchPage extends React.Component {
 
   componentDidMount() {
     const { searchQuery, currentPage } = this.state
-    this.setState({ loading: true })
     if (searchQuery) {
+      this.setState({ loading: true })
       this.getMovies(searchQuery, currentPage)
     }
   }
