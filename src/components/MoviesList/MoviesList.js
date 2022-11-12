@@ -45,7 +45,7 @@ MoviesList.defaultProps = {
 
 MoviesList.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
-  moviesData: PropTypes.object.isRequired,
+  moviesData: PropTypes.array.isRequired,
   rateMovie: PropTypes.func,
   rated: PropTypes.bool,
 }
